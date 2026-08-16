@@ -1,0 +1,667 @@
+<title>居家自律 HomeLock</title>
+<style>
+  /* ---------- Chrome tokens (theme-aware) ---------- */
+  :root{
+    --bg:#EAE7DE;
+    --panel:#F6F4EE;
+    --panel-2:#EFECE3;
+    --text:#1B1B21;
+    --muted:#6C6A5C;
+    --line:rgba(20,20,25,.12);
+    --accent:#1F6F5C;
+    --accent-soft:rgba(31,111,92,.12);
+    --shadow:0 24px 60px -24px rgba(20,25,35,.45);
+    --ring-track:rgba(20,20,25,.10);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0C0D12;
+      --panel:#14161E;
+      --panel-2:#1A1D27;
+      --text:#ECEAE3;
+      --muted:#9A968A;
+      --line:rgba(255,255,255,.10);
+      --accent:#3FB79A;
+      --accent-soft:rgba(63,183,154,.14);
+      --shadow:0 30px 70px -30px rgba(0,0,0,.75);
+      --ring-track:rgba(255,255,255,.10);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0C0D12;
+    --panel:#14161E;
+    --panel-2:#1A1D27;
+    --text:#ECEAE3;
+    --muted:#9A968A;
+    --line:rgba(255,255,255,.10);
+    --accent:#3FB79A;
+    --accent-soft:rgba(63,183,154,.14);
+    --shadow:0 30px 70px -30px rgba(0,0,0,.75);
+    --ring-track:rgba(255,255,255,.10);
+  }
+
+  /* ---------- App tokens (committed dark evening UI) ---------- */
+  :root{
+    --app-bg:#0F121A;
+    --app-surface:#191D28;
+    --app-surface-2:#232838;
+    --app-text:#F3F2EC;
+    --app-muted:#8C93A6;
+    --app-line:rgba(255,255,255,.09);
+    --app-primary:#35C2A0;
+    --app-primary-ink:#04120E;
+    --app-amber:#F0B24A;
+    --app-alarm:#FF5A5F;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Segoe UI",Roboto,system-ui,-apple-system,"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:clamp(20px,4vw,52px) clamp(16px,4vw,40px) 64px}
+
+  /* Header */
+  .masthead{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:clamp(24px,4vw,44px)}
+  .brand-eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600;
+    margin:0 0 12px;
+  }
+  .brand-eyebrow::before{content:"";width:22px;height:1.5px;background:var(--accent);display:inline-block}
+  h1{font-size:clamp(28px,5vw,44px);line-height:1.08;margin:0 0 12px;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+  h1 .zh{display:block}
+  h1 .en{font-size:.5em;font-weight:600;letter-spacing:.04em;color:var(--muted);margin-top:6px}
+  .lede{margin:0;max-width:56ch;color:var(--muted);font-size:clamp(15px,1.6vw,17px)}
+  .theme-toggle{
+    border:1px solid var(--line);background:var(--panel);color:var(--text);
+    border-radius:999px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;
+    display:inline-flex;align-items:center;gap:8px;white-space:nowrap;
+  }
+  .theme-toggle:hover{border-color:var(--accent)}
+  .theme-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* Layout */
+  .stage-grid{display:grid;grid-template-columns:300px 1fr;gap:clamp(20px,3vw,40px);align-items:start}
+  @media (max-width:860px){.stage-grid{grid-template-columns:1fr}}
+
+  /* Flow rail */
+  .rail{position:sticky;top:24px}
+  @media (max-width:860px){.rail{position:static}}
+  .rail h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;font-weight:700}
+  .flow{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+  @media (max-width:860px){
+    .flow{flex-direction:row;overflow-x:auto;gap:8px;padding-bottom:8px;scroll-snap-type:x mandatory}
+  }
+  .flow li{scroll-snap-align:start}
+  .flow button{
+    width:100%;text-align:left;display:flex;gap:12px;align-items:center;
+    border:1px solid transparent;background:transparent;color:var(--text);
+    padding:10px 12px;border-radius:12px;cursor:pointer;font:inherit;transition:background .15s,border-color .15s;
+    white-space:nowrap;
+  }
+  .flow button:hover{background:var(--panel)}
+  .flow button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .flow button[aria-current="true"]{background:var(--panel);border-color:var(--line);box-shadow:var(--shadow)}
+  .flow .idx{
+    flex:0 0 auto;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+    font-size:12px;font-weight:700;background:var(--panel-2);color:var(--muted);font-variant-numeric:tabular-nums;
+  }
+  .flow button[aria-current="true"] .idx{background:var(--accent);color:#fff}
+  .flow .fl-name{font-size:14px;font-weight:600}
+  .flow .fl-sub{font-size:11.5px;color:var(--muted)}
+  @media (max-width:860px){.flow .fl-sub{display:none}}
+
+  /* Phone stage */
+  .stage{display:flex;flex-direction:column;align-items:center;gap:20px}
+  .phone{
+    --w:342px;--h:722px;
+    width:var(--w);height:var(--h);position:relative;
+    background:#05070c;border-radius:44px;padding:11px;
+    box-shadow:var(--shadow),0 0 0 2px rgba(255,255,255,.04) inset;
+    border:1px solid rgba(255,255,255,.06);
+    flex:0 0 auto;
+  }
+  .phone::after{ /* side buttons hint */
+    content:"";position:absolute;right:-2px;top:150px;width:3px;height:64px;border-radius:2px;background:#1a1d24;
+  }
+  .screen{
+    position:absolute;inset:11px;border-radius:34px;overflow:hidden;background:var(--app-bg);color:var(--app-text);
+    display:flex;flex-direction:column;
+  }
+  /* status bar */
+  .statusbar{
+    height:38px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    padding:0 22px;font-size:13px;font-weight:600;color:var(--app-text);position:relative;z-index:5;
+  }
+  .statusbar .dots{display:flex;align-items:center;gap:6px}
+  .statusbar svg{display:block}
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:#05070c;z-index:6}
+
+  /* screen body */
+  .view{position:absolute;inset:0;display:none;flex-direction:column;padding-top:38px}
+  .view.active{display:flex}
+  .view-scroll{flex:1;overflow-y:auto;padding:8px 20px 26px;display:flex;flex-direction:column;gap:16px}
+  .view-scroll::-webkit-scrollbar{width:0}
+
+  /* gesture bar */
+  .gesture{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:120px;height:5px;border-radius:3px;background:rgba(255,255,255,.28);z-index:7}
+
+  /* app header row */
+  .app-top{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 0}
+  .app-logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px;letter-spacing:-.01em}
+  .app-logo .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,var(--app-primary),#2aa5cf);display:grid;place-items:center;color:var(--app-primary-ink);font-size:14px}
+  .icon-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--app-line);background:var(--app-surface);color:var(--app-muted);display:grid;place-items:center;cursor:pointer}
+  .icon-btn:hover{color:var(--app-text)}
+
+  /* generic app card */
+  .card{background:var(--app-surface);border:1px solid var(--app-line);border-radius:18px;padding:16px}
+  .card.tight{padding:14px}
+  .muted{color:var(--app-muted)}
+  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--app-muted);font-weight:700;margin:0}
+
+  /* status hero card */
+  .hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:22px 16px}
+  .status-pill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;background:var(--app-surface-2);color:var(--app-muted)}
+  .status-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--app-primary)}
+  .hero h3{margin:6px 0 0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+  .hero p{margin:0;font-size:13.5px;color:var(--app-muted)}
+
+  /* progress ring */
+  .ring{--p:0;--c:var(--app-primary);width:180px;height:180px;border-radius:50%;position:relative;
+    background:conic-gradient(var(--c) calc(var(--p)*1%),var(--ring-track) 0);display:grid;place-items:center}
+  .ring::before{content:"";position:absolute;inset:12px;border-radius:50%;background:var(--app-bg)}
+  .ring .inner{position:relative;text-align:center}
+  .ring .big{font-size:34px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
+  .ring .lab{font-size:12px;color:var(--app-muted);margin-top:6px}
+  .ring.sm{width:150px;height:150px}
+  .ring.sm .big{font-size:30px}
+
+  /* stat grid */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .stat{background:var(--app-surface);border:1px solid var(--app-line);border-radius:14px;padding:12px 10px;text-align:center}
+  .stat .n{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .stat .k{font-size:11px;color:var(--app-muted);margin-top:3px}
+
+  /* buttons */
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;cursor:pointer;
+    font:inherit;font-weight:700;font-size:15px;padding:15px;border-radius:15px;transition:transform .08s,filter .15s}
+  .btn:active{transform:scale(.985)}
+  .btn:focus-visible{outline:2px solid var(--app-primary);outline-offset:2px}
+  .btn-primary{background:var(--app-primary);color:var(--app-primary-ink)}
+  .btn-primary:hover{filter:brightness(1.06)}
+  .btn-amber{background:var(--app-amber);color:#241703}
+  .btn-alarm{background:var(--app-alarm);color:#fff}
+  .btn-ghost{background:var(--app-surface-2);color:var(--app-text)}
+  .btn-outline{background:transparent;border:1.5px solid var(--app-line);color:var(--app-text)}
+  .btn-text{background:none;border:none;color:var(--app-muted);font-weight:600;font-size:13.5px;cursor:pointer;padding:8px}
+  .btn-text:hover{color:var(--app-text)}
+  .btn-row{display:flex;flex-direction:column;gap:10px}
+  .hint{font-size:12.5px;color:var(--app-muted);text-align:center;margin:0}
+
+  /* stepper */
+  .stepper{display:flex;align-items:center;justify-content:space-between;padding:13px 4px;border-bottom:1px solid var(--app-line)}
+  .stepper:last-child{border-bottom:none}
+  .stepper .lab .t{font-size:15px;font-weight:600}
+  .stepper .lab .d{font-size:11.5px;color:var(--app-muted)}
+  .step-ctrl{display:flex;align-items:center;gap:12px}
+  .step-ctrl button{width:32px;height:32px;border-radius:10px;border:1px solid var(--app-line);background:var(--app-surface-2);color:var(--app-text);font-size:18px;line-height:1;cursor:pointer;display:grid;place-items:center}
+  .step-ctrl button:hover{border-color:var(--app-primary)}
+  .step-ctrl .val{min-width:64px;text-align:center;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+
+  /* toggle */
+  .switch{display:inline-flex;align-items:center}
+  .switch input{position:absolute;opacity:0;pointer-events:none}
+  .switch .track{width:44px;height:26px;border-radius:999px;background:var(--app-surface-2);position:relative;transition:background .15s;border:1px solid var(--app-line)}
+  .switch .track::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .16s}
+  .switch input:checked + .track{background:var(--app-primary);border-color:transparent}
+  .switch input:checked + .track::after{transform:translateX(18px)}
+  .switch input:focus-visible + .track{outline:2px solid var(--app-primary);outline-offset:2px}
+
+  /* settings list */
+  .list{display:flex;flex-direction:column}
+  .row{display:flex;align-items:center;gap:13px;padding:14px 4px;border-bottom:1px solid var(--app-line)}
+  .row:last-child{border-bottom:none}
+  .row .r-ic{width:34px;height:34px;border-radius:10px;background:var(--app-surface-2);display:grid;place-items:center;flex:0 0 auto;font-size:16px}
+  .row .r-main{flex:1;min-width:0}
+  .row .r-t{font-size:14.5px;font-weight:600}
+  .row .r-s{font-size:12px;color:var(--app-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .r-end{color:var(--app-muted);font-size:13px}
+  .chev{color:var(--app-muted)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{font-size:12px;padding:5px 11px;border-radius:999px;background:var(--app-surface-2);color:var(--app-text);border:1px solid var(--app-line)}
+  .chip.ok{color:var(--app-primary);border-color:rgba(53,194,160,.35)}
+
+  /* full-screen alert views */
+  .fs{position:absolute;inset:0;padding:38px 24px 30px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;z-index:8}
+  .fs.intercept{background:radial-gradient(120% 90% at 50% 8%,rgba(240,178,74,.22),transparent 60%),var(--app-bg)}
+  .fs.alarm{background:radial-gradient(120% 90% at 50% 8%,rgba(255,90,95,.30),transparent 62%),#160a0c}
+  .fs.exempt{background:radial-gradient(120% 90% at 50% 8%,rgba(53,194,160,.20),transparent 60%),var(--app-bg)}
+  .fs .glyph{font-size:44px;line-height:1}
+  .fs h3{margin:0;font-size:24px;font-weight:800;letter-spacing:-.01em}
+  .fs p{margin:0;font-size:14px;color:var(--app-muted);max-width:26ch}
+  .fs .ctas{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:4px}
+
+  /* alarm buzz animation */
+  .buzz{animation:buzz .12s linear infinite}
+  @keyframes buzz{0%{transform:translate(0,0)}25%{transform:translate(1.5px,-1px)}50%{transform:translate(-1.5px,1px)}75%{transform:translate(1px,1.5px)}100%{transform:translate(-1px,-1px)}}
+  .waves{display:flex;gap:6px;align-items:flex-end;height:34px}
+  .waves span{width:5px;border-radius:3px;background:var(--app-alarm);animation:wv .7s ease-in-out infinite}
+  .waves span:nth-child(2){animation-delay:.1s}.waves span:nth-child(3){animation-delay:.2s}.waves span:nth-child(4){animation-delay:.3s}.waves span:nth-child(5){animation-delay:.15s}
+  @keyframes wv{0%,100%{height:8px}50%{height:34px}}
+  .alarm-clock{font-size:15px;font-weight:700;color:#ffb4b6;font-variant-numeric:tabular-nums}
+
+  @media (prefers-reduced-motion:reduce){
+    .buzz,.waves span{animation:none}
+    *{scroll-behavior:auto}
+  }
+
+  /* stage caption + controls */
+  .caption{max-width:342px;text-align:center}
+  .caption .c-step{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  .caption h3{margin:6px 0 4px;font-size:19px;font-weight:800;letter-spacing:-.01em}
+  .caption p{margin:0;color:var(--muted);font-size:14px}
+  .nav{display:flex;gap:10px;align-items:center;justify-content:center}
+  .nav button{
+    border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:12px;
+    padding:11px 18px;font:inherit;font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;gap:7px;align-items:center;
+  }
+  .nav button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .nav button:disabled{opacity:.4;cursor:not-allowed}
+  .nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .footnote{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;max-width:70ch}
+  .footnote strong{color:var(--text)}
+  .kbd{font:inherit;font-size:12px;padding:1px 7px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div>
+      <p class="brand-eyebrow">交互原型 · Android</p>
+      <h1><span class="zh">居家自律</span><span class="en">HomeLock — 到家自律 App</span></h1>
+      <p class="lede">到家自动提醒开启自律模式；违规使用先全屏劝返，30 秒后持续震动嗡鸣告警；急事可有限豁免。点击左侧步骤或手机内按钮走通完整流程。</p>
+    </div>
+    <button class="theme-toggle" id="themeBtn" aria-label="切换明暗主题"><span id="themeIcon">◐</span><span id="themeLabel">主题</span></button>
+  </header>
+
+  <div class="stage-grid">
+    <!-- Flow rail -->
+    <nav class="rail" aria-label="流程步骤">
+      <h2>流程 / 界面</h2>
+      <ul class="flow" id="flow"></ul>
+    </nav>
+
+    <!-- Phone stage -->
+    <div class="stage">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="statusbar">
+            <span id="clock">21:14</span>
+            <span class="dots">
+              <!-- signal -->
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1" opacity=".4"/></svg>
+              <!-- wifi -->
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 12l2.2-2.7a3.4 3.4 0 0 0-4.4 0L8 12z"/><path d="M8 6.4c1.7 0 3.3.6 4.5 1.8l1.4-1.7A9 9 0 0 0 8 4a9 9 0 0 0-5.9 2.5l1.4 1.7A6.6 6.6 0 0 1 8 6.4z" opacity=".85"/><path d="M8 1.2c2.8 0 5.4 1 7.4 2.8L16 3A11.9 11.9 0 0 0 8 0 11.9 11.9 0 0 0 0 3l.6 1C2.6 2.2 5.2 1.2 8 1.2z" opacity=".5"/></svg>
+              <!-- battery -->
+              <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="2.5" stroke="currentColor" stroke-width="1.2" opacity=".55"/><rect x="2.6" y="2.6" width="13" height="6.8" rx="1.2" fill="currentColor"/><rect x="22" y="4" width="1.6" height="4" rx="1" fill="currentColor" opacity=".55"/></svg>
+            </span>
+          </div>
+
+          <!-- ========== VIEWS ========== -->
+
+          <!-- 1. HOME -->
+          <section class="view active" data-view="home">
+            <div class="view-scroll">
+              <div class="app-top">
+                <div class="app-logo"><span class="mark">🏠</span>居家自律</div>
+                <button class="icon-btn" data-go="settings" aria-label="设置">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 2.6 7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 7 2.6h.1A1.6 1.6 0 0 0 8.9 1.1V1a2 2 0 1 1 4 0v.1A1.6 1.6 0 0 0 15 2.6a1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.5 1.1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+                </button>
+              </div>
+
+              <div class="card hero">
+                <span class="status-pill"><span class="dot"></span>已在家 · 未开启</span>
+                <h3>晚上好，回家啦</h3>
+                <p>已连接 Home-WiFi_5G · 就在家附近</p>
+              </div>
+
+              <div>
+                <p class="eyebrow" style="margin:0 0 8px 2px">今日</p>
+                <div class="stats">
+                  <div class="stat"><div class="n">2<span style="font-size:13px">时</span>10<span style="font-size:13px">分</span></div><div class="k">自律时长</div></div>
+                  <div class="stat"><div class="n">1</div><div class="k">违规次数</div></div>
+                  <div class="stat"><div class="n">1<span style="font-size:13px">/2</span></div><div class="k">用过豁免</div></div>
+                </div>
+              </div>
+
+              <div class="btn-row">
+                <button class="btn btn-primary" data-go="config">手动开启自律模式</button>
+                <p class="hint">到家时会自动提醒你，无需每次手动开启</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. ARRIVAL PROMPT -->
+          <section class="view" data-view="arrival">
+            <div class="view-scroll" style="justify-content:center">
+              <div class="hero" style="padding-top:10px">
+                <div style="font-size:52px">🏠</div>
+                <h3 style="font-size:24px">欢迎回家</h3>
+                <p>检测到你已到家<br>（Home-WiFi_5G · 地理围栏）</p>
+              </div>
+              <div class="card" style="text-align:center">
+                <p style="margin:0 0 2px;font-size:16px;font-weight:700">要开启自律模式吗？</p>
+                <p class="muted" style="margin:0;font-size:13px">放下手机，好好休息一会儿</p>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-primary" data-go="config">开启自律模式</button>
+                <button class="btn btn-ghost" data-go="home">暂不，先玩会儿</button>
+              </div>
+              <p class="hint">该提醒每次到家仅弹一次</p>
+            </div>
+          </section>
+
+          <!-- 3. CONFIG -->
+          <section class="view" data-view="config">
+            <div class="view-scroll">
+              <div class="app-top">
+                <button class="icon-btn" data-go="arrival" aria-label="返回">‹</button>
+                <div style="font-weight:800;font-size:16px">设置本次自律</div>
+                <span style="width:34px"></span>
+              </div>
+              <div class="card">
+                <div class="stepper" data-step="delay" data-min="0" data-max="60" data-inc="5" data-unit="min">
+                  <div class="lab"><div class="t">开启延迟</div><div class="d">给自己收尾的缓冲时间</div></div>
+                  <div class="step-ctrl"><button data-act="dec" aria-label="减少">−</button><span class="val">5 分钟</span><button data-act="inc" aria-label="增加">+</button></div>
+                </div>
+                <div class="stepper" data-step="dur" data-min="15" data-max="480" data-inc="15" data-unit="dur">
+                  <div class="lab"><div class="t">自律时长</div><div class="d">持续多久后自动结束</div></div>
+                  <div class="step-ctrl"><button data-act="dec" aria-label="减少">−</button><span class="val">2 小时</span><button data-act="inc" aria-label="增加">+</button></div>
+                </div>
+                <div class="stepper" data-step="exc" data-min="0" data-max="10" data-inc="1" data-unit="cnt">
+                  <div class="lab"><div class="t">豁免次数</div><div class="d">应急时可临时使用几次</div></div>
+                  <div class="step-ctrl"><button data-act="dec" aria-label="减少">−</button><span class="val">2 次</span><button data-act="inc" aria-label="增加">+</button></div>
+                </div>
+                <div class="stepper" data-step="exm" data-min="1" data-max="30" data-inc="1" data-unit="min">
+                  <div class="lab"><div class="t">每次豁免时长</div><div class="d">每次豁免可用多久</div></div>
+                  <div class="step-ctrl"><button data-act="dec" aria-label="减少">−</button><span class="val">5 分钟</span><button data-act="inc" aria-label="增加">+</button></div>
+                </div>
+              </div>
+              <div class="card tight" style="display:flex;align-items:center;justify-content:space-between">
+                <div class="lab"><div style="font-size:14.5px;font-weight:600">保存为默认模板</div><div class="muted" style="font-size:12px">下次到家一键沿用</div></div>
+                <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-primary" data-go="preparing">开始（先进入准备期）</button>
+                <button class="btn btn-text" data-go="home">取消</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 4. PREPARING -->
+          <section class="view" data-view="preparing">
+            <div class="view-scroll" style="justify-content:center;align-items:center;gap:22px">
+              <p class="eyebrow">准备期 · 缓冲中</p>
+              <div class="ring" style="--p:78;--c:var(--app-amber)">
+                <div class="inner"><div class="big">04:47</div><div class="lab">后正式开启</div></div>
+              </div>
+              <p style="text-align:center;font-size:15px;margin:0;max-width:24ch">把手头的事收个尾，<br>准备放下手机吧</p>
+              <div class="btn-row" style="width:100%">
+                <button class="btn btn-primary" data-go="active">立即开始自律</button>
+                <button class="btn btn-text" data-go="home">取消本次</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 5. ACTIVE -->
+          <section class="view" data-view="active">
+            <div class="view-scroll" style="justify-content:center;align-items:center;gap:20px">
+              <span class="status-pill" style="color:var(--app-primary)"><span class="dot"></span>自律进行中</span>
+              <div class="ring" style="--p:64;--c:var(--app-primary)">
+                <div class="inner"><div class="big">01:47</div><div class="lab">距结束 · 时:分</div></div>
+              </div>
+              <div class="card tight" style="width:100%;display:flex;align-items:center;justify-content:space-between">
+                <div><div style="font-size:14px;font-weight:700">豁免额度</div><div class="muted" style="font-size:12px">应急时可临时使用</div></div>
+                <div style="text-align:right"><div style="font-size:18px;font-weight:800;color:var(--app-amber)">2 / 2</div><div class="muted" style="font-size:11px">每次 5 分钟</div></div>
+              </div>
+              <div class="btn-row" style="width:100%">
+                <button class="btn btn-amber" data-go="exempted">使用豁免（应急）</button>
+                <button class="btn btn-outline" data-go="intercept">▶ 模拟：忍不住拿起手机</button>
+              </div>
+              <p class="hint">放下手机，享受当下 · 违规使用会先劝返、后告警</p>
+            </div>
+          </section>
+
+          <!-- 6. INTERCEPT (30s grace) -->
+          <section class="view" data-view="intercept">
+            <div class="fs intercept">
+              <div class="glyph">⚠️</div>
+              <h3>自律模式进行中</h3>
+              <div class="ring sm" style="--p:100;--c:var(--app-amber);animation:none">
+                <div class="inner"><div class="big" id="graceNum">30</div><div class="lab">秒后开始告警</div></div>
+              </div>
+              <p>检测到你在使用手机。放下手机即可解除；急事请使用豁免。</p>
+              <div class="ctas">
+                <button class="btn btn-primary" data-go="active">放下手机 · 锁屏</button>
+                <button class="btn btn-amber" data-go="exempted">我有急事，使用豁免</button>
+                <button class="btn btn-text" data-go="alarm">（忽略 30 秒 → 触发告警）</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 7. ALARM -->
+          <section class="view" data-view="alarm">
+            <div class="fs alarm">
+              <div class="glyph buzz">🔴</div>
+              <h3 class="buzz">告警中</h3>
+              <div class="waves" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+              <p class="alarm-clock">持续震动 · 嗡鸣 00:12</p>
+              <p>正在使用手机且无有效豁免。放下手机或使用豁免即可立即停止。</p>
+              <div class="ctas">
+                <button class="btn btn-primary" data-go="active">锁屏 · 停止告警</button>
+                <button class="btn btn-amber" data-go="exempted">使用豁免</button>
+              </div>
+              <p class="hint" style="color:rgba(255,255,255,.55)">可穿透静音/勿扰 · 来电等紧急场景自动放行</p>
+            </div>
+          </section>
+
+          <!-- 8. EXEMPTED -->
+          <section class="view" data-view="exempted">
+            <div class="fs exempt">
+              <span class="status-pill" style="color:var(--app-amber)"><span class="dot" style="background:var(--app-amber)"></span>豁免中</span>
+              <div class="ring" style="--p:99;--c:var(--app-amber)">
+                <div class="inner"><div class="big">04:58</div><div class="lab">豁免剩余时间</div></div>
+              </div>
+              <p>处理你的急事吧。结束后自动恢复自律，还剩 <strong style="color:var(--app-text)">1 次</strong> 豁免。</p>
+              <div class="ctas">
+                <button class="btn btn-primary" data-go="active">提前结束（省一次额度）</button>
+              </div>
+              <p class="hint">豁免到期前 30 秒会轻震提醒</p>
+            </div>
+          </section>
+
+          <!-- 9. FINISHED -->
+          <section class="view" data-view="finished">
+            <div class="view-scroll" style="justify-content:center;align-items:center;gap:18px">
+              <div style="font-size:48px">🎉</div>
+              <h3 style="margin:0;font-size:22px;font-weight:800">完成本次自律</h3>
+              <div class="ring sm" style="--p:100;--c:var(--app-primary)">
+                <div class="inner"><div class="big">2<span style="font-size:16px">小时</span></div><div class="lab">专注时长</div></div>
+              </div>
+              <div class="stats" style="width:100%">
+                <div class="stat"><div class="n">1</div><div class="k">违规</div></div>
+                <div class="stat"><div class="n">1</div><div class="k">告警</div></div>
+                <div class="stat"><div class="n">1<span style="font-size:13px">/2</span></div><div class="k">豁免</div></div>
+              </div>
+              <p class="hint">净放下手机 1 小时 48 分 · 比昨天多 22 分钟</p>
+              <button class="btn btn-primary" data-go="home" style="width:100%">返回首页</button>
+            </div>
+          </section>
+
+          <!-- 10. SETTINGS -->
+          <section class="view" data-view="settings">
+            <div class="view-scroll">
+              <div class="app-top">
+                <button class="icon-btn" data-go="home" aria-label="返回">‹</button>
+                <div style="font-weight:800;font-size:16px">设置</div>
+                <span style="width:34px"></span>
+              </div>
+
+              <div>
+                <p class="eyebrow" style="margin:0 0 8px 2px">到家检测（三种全开）</p>
+                <div class="card list">
+                  <div class="row"><div class="r-ic">📶</div><div class="r-main"><div class="r-t">家庭 WiFi</div><div class="r-s">Home-WiFi_5G</div></div><span class="r-end chev">›</span></div>
+                  <div class="row"><div class="r-ic">📍</div><div class="r-main"><div class="r-t">地理围栏</div><div class="r-s">半径 120 米</div></div><span class="r-end chev">›</span></div>
+                  <div class="row"><div class="r-ic">✋</div><div class="r-main"><div class="r-t">手动确认兜底</div><div class="r-s">首页可手动"我到家了"</div></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
+                </div>
+              </div>
+
+              <div>
+                <p class="eyebrow" style="margin:0 0 8px 2px">自律与告警</p>
+                <div class="card list">
+                  <div class="row"><div class="r-ic">⏱️</div><div class="r-main"><div class="r-t">默认模板</div><div class="r-s">2小时 · 延迟5分 · 豁免2×5分</div></div><span class="r-end chev">›</span></div>
+                  <div class="row"><div class="r-ic">🔔</div><div class="r-main"><div class="r-t">告警强度</div><div class="r-s">震动+声音 · 30秒宽限 · 单次≤5分</div></div><span class="r-end chev">›</span></div>
+                  <div class="row" style="align-items:flex-start"><div class="r-ic">✅</div><div class="r-main"><div class="r-t" style="margin-bottom:7px">放行清单（不告警）</div><div class="chips"><span class="chip ok">来电/通话</span><span class="chip ok">紧急呼叫</span><span class="chip ok">闹钟</span><span class="chip ok">导航</span></div></div></div>
+                </div>
+              </div>
+
+              <div>
+                <p class="eyebrow" style="margin:0 0 8px 2px">权限自检</p>
+                <div class="card list">
+                  <div class="row"><div class="r-ic">🛡️</div><div class="r-main"><div class="r-t">悬浮窗 · 使用情况 · 勿扰访问</div><div class="r-s">保活与告警所需</div></div><span class="chip ok">已授权</span></div>
+                  <div class="row"><div class="r-ic">🔋</div><div class="r-main"><div class="r-t">忽略电池优化 · 自启动</div><div class="r-s">降低被系统杀死概率</div></div><span class="chip ok">已授权</span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="gesture"></div>
+        </div>
+      </div>
+
+      <!-- Caption + controls -->
+      <div class="caption">
+        <div class="c-step" id="capStep">界面 1 / 10</div>
+        <h3 id="capTitle">首页 · 仪表盘</h3>
+        <p id="capDesc">当前状态、今日统计与手动开启入口。</p>
+      </div>
+      <div class="nav">
+        <button id="prevBtn">‹ 上一步</button>
+        <button id="nextBtn">下一步 ›</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="footnote">
+    <strong>关于这个原型：</strong>覆盖到家提醒 → 参数配置 → 准备期 → 自律进行中 → 全屏劝返（30 秒宽限）→ 震动嗡鸣告警 → 豁免 → 结束统计的完整流程，对应设计文档 <span class="kbd">docs/design.md</span> v0.2。App 界面采用深色夜间风格（贴合傍晚居家、减少屏幕刺激）。这是<strong>视觉与交互示意</strong>，非最终 UI 规范；Q4/Q6/Q7/Q8 按文档默认建议呈现，可随时调整。
+  </p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  // ----- Theme toggle -----
+  var root=document.documentElement, tBtn=document.getElementById("themeBtn"),
+      tIcon=document.getElementById("themeIcon"), tLabel=document.getElementById("themeLabel");
+  function sysDark(){return window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches;}
+  function curDark(){var t=root.getAttribute("data-theme");return t?t==="dark":sysDark();}
+  function paint(){var d=curDark();tIcon.textContent=d?"☀":"☾";tLabel.textContent=d?"浅色":"深色";}
+  tBtn.addEventListener("click",function(){root.setAttribute("data-theme",curDark()?"light":"dark");paint();});
+  paint();
+
+  // ----- Live clock -----
+  var clk=document.getElementById("clock");
+  function tick(){var n=new Date();clk.textContent=String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");}
+  tick();setInterval(tick,10000);
+
+  // ----- Flow definition -----
+  var flow=[
+    {id:"home",name:"首页 · 仪表盘",sub:"状态与统计",desc:"当前状态、今日统计与手动开启入口。"},
+    {id:"arrival",name:"到家提醒",sub:"自动弹出",desc:"检测到到家后弹出，询问是否开启自律模式。"},
+    {id:"config",name:"参数配置",sub:"四项设置",desc:"设置开启延迟、自律时长、豁免次数与每次时长（可调）。"},
+    {id:"preparing",name:"准备期",sub:"缓冲倒计时",desc:"给自己收尾的缓冲时间，此期间使用不告警。"},
+    {id:"active",name:"自律进行中",sub:"核心监控",desc:"显示剩余时间与豁免额度，监控违规使用。"},
+    {id:"intercept",name:"全屏劝返",sub:"30 秒宽限",desc:"违规使用先劝返，30 秒内放下或豁免即可，否则升级告警。"},
+    {id:"alarm",name:"告警",sub:"震动+嗡鸣",desc:"持续震动与嗡鸣，直到放下手机或使用豁免；紧急场景放行。"},
+    {id:"exempted",name:"豁免中",sub:"应急出口",desc:"消耗一次额度，倒计时内正常使用，到期自动恢复自律。"},
+    {id:"finished",name:"结束统计",sub:"本次回顾",desc:"本周期专注时长、违规、告警与豁免使用统计。"},
+    {id:"settings",name:"设置",sub:"家/告警/权限",desc:"家与检测方式、默认模板、告警强度、放行清单与权限自检。"}
+  ];
+  var idx=0;
+  var views={};document.querySelectorAll(".view").forEach(function(v){views[v.dataset.view]=v;});
+  var flowEl=document.getElementById("flow");
+  flow.forEach(function(f,i){
+    var li=document.createElement("li");
+    var b=document.createElement("button");
+    b.innerHTML='<span class="idx">'+(i+1)+'</span><span><span class="fl-name">'+f.name+'</span><br><span class="fl-sub">'+f.sub+'</span></span>';
+    b.addEventListener("click",function(){show(i);});
+    li.appendChild(b);flowEl.appendChild(li);
+  });
+  var flowBtns=flowEl.querySelectorAll("button");
+  var capStep=document.getElementById("capStep"),capTitle=document.getElementById("capTitle"),
+      capDesc=document.getElementById("capDesc"),prevBtn=document.getElementById("prevBtn"),nextBtn=document.getElementById("nextBtn");
+
+  function show(i){
+    idx=Math.max(0,Math.min(flow.length-1,i));
+    var f=flow[idx];
+    Object.keys(views).forEach(function(k){views[k].classList.toggle("active",k===f.id);});
+    flowBtns.forEach(function(b,bi){b.setAttribute("aria-current",bi===idx?"true":"false");});
+    capStep.textContent="界面 "+(idx+1)+" / "+flow.length;
+    capTitle.textContent=f.name;capDesc.textContent=f.desc;
+    prevBtn.disabled=idx===0;nextBtn.disabled=idx===flow.length-1;
+    if(f.id==="intercept")runGrace();else stopGrace();
+  }
+  function byId(id){for(var i=0;i<flow.length;i++)if(flow[i].id===id)return i;return 0;}
+
+  // in-app navigation buttons
+  document.querySelectorAll("[data-go]").forEach(function(el){
+    el.addEventListener("click",function(){show(byId(el.dataset.go));});
+  });
+  prevBtn.addEventListener("click",function(){show(idx-1);});
+  nextBtn.addEventListener("click",function(){show(idx+1);});
+  document.addEventListener("keydown",function(e){
+    if(e.key==="ArrowRight"){nextBtn.click();}else if(e.key==="ArrowLeft"){prevBtn.click();}
+  });
+
+  // grace countdown on intercept screen
+  var graceT=null,graceN=document.getElementById("graceNum");
+  function runGrace(){
+    stopGrace();var n=30;graceN.textContent=n;
+    graceT=setInterval(function(){n--;if(n<0){stopGrace();return;}graceN.textContent=n;},1000);
+  }
+  function stopGrace(){if(graceT){clearInterval(graceT);graceT=null;}}
+
+  // ----- Steppers -----
+  function fmt(v,unit){
+    if(unit==="min")return v+" 分钟";
+    if(unit==="cnt")return v+" 次";
+    if(unit==="dur"){var h=Math.floor(v/60),m=v%60;return h>0?(h+" 小时"+(m?(" "+m+"分"):"")):(m+" 分钟");}
+    return v;
+  }
+  document.querySelectorAll(".stepper").forEach(function(st){
+    var min=+st.dataset.min,max=+st.dataset.max,inc=+st.dataset.inc,unit=st.dataset.unit;
+    var valEl=st.querySelector(".val");
+    var cur=(function(){ // parse initial from text
+      if(unit==="dur")return 120;if(unit==="cnt")return 2;if(st.dataset.step==="exm")return 5;return 5;
+    })();
+    function render(){valEl.textContent=fmt(cur,unit);}
+    st.querySelectorAll("button").forEach(function(b){
+      b.addEventListener("click",function(){
+        cur+=(b.dataset.act==="inc"?inc:-inc);
+        cur=Math.max(min,Math.min(max,cur));render();
+      });
+    });
+    render();
+  });
+
+  show(0);
+})();
+</script>
